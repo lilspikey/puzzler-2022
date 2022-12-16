@@ -102,11 +102,9 @@ def interactive():
 
 def automatic(words):
     by_position_letter = defaultdict(set)
-    by_letter = defaultdict(set)
     for word in words:
         for i, w in enumerate(word):
             by_position_letter[(i, w)].add(word)
-            by_letter[w].add(word)
     current_words = set(words)
     guess = "alien"
     while True:
@@ -119,6 +117,10 @@ def automatic(words):
             if score == CORRECT_GUESS:
                 break
             if score:
+                available_positions = []
+                for i, s in enumerate(score):
+                    if s != CORRECT_SPOT:
+                        available_positions.append(i)
                 for i, s in enumerate(score):
                     g = guess[i]
                     if s == CORRECT_SPOT:
@@ -126,7 +128,11 @@ def automatic(words):
                     else:
                         current_words = current_words - by_position_letter[(i, g)]
                     if s == WRONG_SPOT:
-                        current_words = current_words & by_letter[g]
+                        other_postions = [p for p in available_positions if p != i]
+                        other_spot_words = set()
+                        for pos in other_postions:
+                            other_spot_words = other_spot_words | by_position_letter[(pos, g)]
+                        current_words = current_words & other_spot_words
                     verbose(len(current_words))
                 guess = random.choice(list(current_words))
     yield
