@@ -149,14 +149,17 @@ def automatic(words):
                     g = guess[i]
                     if s == CORRECT_SPOT:
                         current_words = current_words & by_position_letter[(i, g)]
-                    else:
-                        current_words = current_words - by_position_letter[(i, g)]
-                    if s == WRONG_SPOT:
-                        other_postions = [p for p in available_positions if p != i and guess[p] != g]
+                    elif s == WRONG_SPOT:
+                        other_postions = [p for p in available_positions if guess[p] != g]
                         other_spot_words = set()
                         for pos in other_postions:
                             other_spot_words = other_spot_words | by_position_letter[(pos, g)]
                         current_words = current_words & other_spot_words
+                    elif s == NO_SPOT:
+                        no_spot_words = set()
+                        for pos in available_positions:
+                            no_spot_words = no_spot_words | by_position_letter[(pos, g)]
+                        current_words = current_words - no_spot_words
                     verbose(len(current_words))
                 by_position_letter = by_position_letter_index(current_words)
                 guess = choose_candidate_word(by_position_letter, current_words)
