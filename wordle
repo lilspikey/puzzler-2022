@@ -125,6 +125,25 @@ def interactive():
 
 
 def automatic(words):
+    """
+    >>> guesser = automatic(["alien", "alley", "voles"])
+    >>> next(guesser)
+    'alien'
+    >>> guesser.send((1, '🟩🟩⬜🟩⬜', None, None))
+    alien
+    1 🟩🟩⬜🟩⬜
+    'alley'
+    >>> guesser = automatic(["wolfs", "hasty", "tasty", "voles", "shall", "shalt"])
+    >>> next(guesser)
+    'shalt'
+    >>> guesser.send((1, '🟨🟨🟨⬜🟨', None, None))
+    shalt
+    1 🟨🟨🟨⬜🟨
+    'hasty'
+    >>> guesser.send((2, '🟩🟩🟩🟩🟩', None, None))
+    hasty
+    2 🟩🟩🟩🟩🟩
+    """
     by_position_letter = by_position_letter_index(words)
     guess = choose_candidate_word(by_position_letter, words)
     current_words = set(words)
