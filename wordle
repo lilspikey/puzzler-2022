@@ -157,10 +157,8 @@ def automatic(words):
                             other_spot_words = other_spot_words | by_position_letter[(pos, g)]
                         current_words = current_words & other_spot_words
                     elif s == NO_SPOT:
-                        no_spot_words = set()
                         for pos in available_positions:
-                            no_spot_words = no_spot_words | by_position_letter[(pos, g)]
-                        current_words = current_words - no_spot_words
+                            current_words = current_words - by_position_letter[(pos, g)]
                     verbose(len(current_words))
                 by_position_letter = by_position_letter_index(current_words)
                 guess = choose_candidate_word(by_position_letter, current_words)
