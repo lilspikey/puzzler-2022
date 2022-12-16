@@ -4,6 +4,7 @@ import argparse
 import os
 import random
 import re
+from collections import defaultdict
 
 
 WORDS_GIST_URL = 'https://gist.githubusercontent.com/dracos/dd0668f281e685bad51479e5acaadb93/raw/ca9018b32e963292473841fb55fd5a62176769b5/valid-wordle-words.txt'
@@ -99,11 +100,53 @@ def interactive():
     yield
 
 
+def automatic(words):
+    by_position_letter = defaultdict(set)
+    by_letter = defaultdict(set)
+    for word in words:
+        for i, w in enumerate(word):
+            by_position_letter[(i, w)].add(word)
+            by_letter[w].add(word)
+    current_words = set(words)
+    guess = "alien"
+    while True:
+        result = yield guess
+        if result:
+            verbose(result)
+            guess_num, score, answer, err = result
+            print(guess)
+            print(guess_num, score)
+            if score == CORRECT_GUESS:
+                break
+            if score:
+                for i, s in enumerate(score):
+                    g = guess[i]
+                    if s == CORRECT_SPOT:
+                        current_words = current_words & by_position_letter[(i, g)]
+                    else:
+                        current_words = current_words - by_position_letter[(i, g)]
+                    if s == WRONG_SPOT:
+                        current_words = current_words & by_letter[g]
+                    verbose(len(current_words))
+                guess = random.choice(list(current_words))
+    yield
+
+    
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--doc-test", action="store_true")
+    parser.add_argument("--guesser", choices=["interactive", "automatic"], default="interactive")
+    parser.add_argument("--verbose", action="store_true")
 
     args = parser.parse_args()
+    if args.verbose:
+        verbose = print
+    else:
+        def verbose(*arg, **kw):
+            pass
+
     if args.doc_test:
         import doctest
         doctest.testmod(verbose=True)
@@ -111,7 +154,11 @@ if __name__ == '__main__':
         words = load_words()
         word = random.choice(words)
         try:
-            run_wordle(word, set(words), interactive())
+            if args.guesser == "interactive":
+                guesser = interactive()
+            else:
+                guesser = automatic(words)
+            run_wordle(word, set(words), guesser)
         except (EOFError, KeyboardInterrupt) as e:
             pass
 
