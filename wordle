@@ -81,6 +81,30 @@ def run_wordle(answer, words, guesser):
     guesser.send((guess_num, score, answer, err))
 
 
+def overlap_with_other_words(by_position_letter, word):
+    overlap = 0
+    for i, w in enumerate(word):
+        overlap += len(by_position_letter[(i, w)])
+    return overlap
+
+
+def choose_candidate_word(by_position_letter, words):
+    words = list(words)
+    overlap_key = lambda w: overlap_with_other_words(by_position_letter, w)
+    words.sort(key=overlap_key)
+    word = words[-1]
+    verbose("overlap", word, overlap_key(word))
+    return word
+
+
+def by_position_letter_index(words):
+    by_position_letter = defaultdict(set)
+    for word in words:
+        for i, w in enumerate(word):
+            by_position_letter[(i, w)].add(word)
+    return by_position_letter
+
+
 def interactive():
     while True:
         result = yield input(">")
@@ -101,12 +125,9 @@ def interactive():
 
 
 def automatic(words):
-    by_position_letter = defaultdict(set)
-    for word in words:
-        for i, w in enumerate(word):
-            by_position_letter[(i, w)].add(word)
+    by_position_letter = by_position_letter_index(words)
+    guess = choose_candidate_word(by_position_letter, words)
     current_words = set(words)
-    guess = "alien"
     while True:
         result = yield guess
         if result:
@@ -115,6 +136,9 @@ def automatic(words):
             print(guess)
             print(guess_num, score)
             if score == CORRECT_GUESS:
+                break
+            elif answer:
+                print(answer)
                 break
             if score:
                 available_positions = []
@@ -134,7 +158,8 @@ def automatic(words):
                             other_spot_words = other_spot_words | by_position_letter[(pos, g)]
                         current_words = current_words & other_spot_words
                     verbose(len(current_words))
-                guess = random.choice(list(current_words))
+                by_position_letter = by_position_letter_index(current_words)
+                guess = choose_candidate_word(by_position_letter, current_words)
     yield
 
     
