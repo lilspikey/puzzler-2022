@@ -90,10 +90,10 @@ def overlap_with_other_words(by_position_letter, word):
 
 def choose_candidate_word(by_position_letter, words):
     words = list(words)
-    overlap_key = lambda w: overlap_with_other_words(by_position_letter, w)
-    words.sort(key=overlap_key)
+    score = lambda w: len(set(w)) * overlap_with_other_words(by_position_letter, w)
+    words.sort(key=score)
     word = words[-1]
-    verbose("overlap", word, overlap_key(word))
+    verbose("score", word, score(word))
     return word
 
 
