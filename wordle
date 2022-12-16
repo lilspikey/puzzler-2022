@@ -128,7 +128,7 @@ def automatic(words):
                     else:
                         current_words = current_words - by_position_letter[(i, g)]
                     if s == WRONG_SPOT:
-                        other_postions = [p for p in available_positions if p != i]
+                        other_postions = [p for p in available_positions if p != i and guess[p] != g]
                         other_spot_words = set()
                         for pos in other_postions:
                             other_spot_words = other_spot_words | by_position_letter[(pos, g)]
