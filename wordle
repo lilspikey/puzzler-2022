@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import random
+import re
+
+
+WORDS_GIST_URL = 'https://gist.githubusercontent.com/dracos/dd0668f281e685bad51479e5acaadb93/raw/ca9018b32e963292473841fb55fd5a62176769b5/valid-wordle-words.txt'
+CORRECT_SPOT = '🟩'
+WRONG_SPOT = '🟨'
+NO_SPOT = '⬜'
+CORRECT_GUESS = CORRECT_SPOT * 5
+
+
+def load_words():
+    words_file = 'valid-wordle-words.txt'
+    if not os.path.exists(words_file):
+        from urllib.request import urlopen
+        words = urlopen(WORDS_GIST_URL).read().decode('utf8')
+        with open(words_file, 'w') as f:
+            f.write(words)
+    with open(words_file, 'r') as f:
+        return [word.strip() for word in f.readlines()]
+
+
+def score_guess(word, guess):
+    """
+    >>> score_guess("alien", "alien")
+    '🟩🟩🟩🟩🟩'
+    >>> score_guess("alley", "alien")
+    '🟩🟩⬜🟩⬜'
+    >>> score_guess("alien", "alley")
+    '🟩🟩⬜🟩⬜'
+    >>> score_guess("alien", "shove")
+    '⬜⬜⬜⬜🟨'
+    >>> score_guess("hoove", "shove")
+    '⬜🟨🟩🟩🟩'
+    >>> score_guess("hoove", "odour")
+    '🟨⬜🟩⬜⬜'
+    """
+    score = [None] * len(word)
+    not_exact = set()
+    for i, w in enumerate(word):
+        g = guess[i]
+        if g == w:
+            score[i] = CORRECT_SPOT
+        else:
+            not_exact.add(w)
+    for i, w in enumerate(word):
+        g = guess[i]
+        if g != w:
+            if g in not_exact:
+                score[i] = WRONG_SPOT
+            else:
+                score[i] = NO_SPOT
+    return ''.join(score)
+
+
+def run_wordle(answer, words, guesser):
+    guess_num = 0
+    to_send = None
+    while guess_num < 6:
+        score = err = None
+        if to_send is None:
+            guess = next(guesser)
+        else:
+            guess = guesser.send(to_send)
+        if not re.match(r'[a-zA-Z]{5}', guess):
+            err = "invalid guess"
+        elif guess not in words:
+            err = "not in word list"
+        else:
+            err = None
+            score = score_guess(answer, guess)
+            guess_num += 1
+            if guess == answer:
+                break
+        to_send = (guess_num, score, None, err)
+    guesser.send((guess_num, score, answer, err))
+
+
+def interactive():
+    while True:
+        result = yield input(">")
+        if result:
+            guess_num, score, answer, err = result
+            
+            if err:
+                print(err)
+            else:
+                print(guess_num, score)
+
+            if score == CORRECT_GUESS:
+                break
+            elif answer:
+                print(answer)
+                break
+    yield
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--doc-test", action="store_true")
+
+    args = parser.parse_args()
+    if args.doc_test:
+        import doctest
+        doctest.testmod(verbose=True)
+    else:
+        words = load_words()
+        word = random.choice(words)
+        try:
+            run_wordle(word, set(words), interactive())
+        except (EOFError, KeyboardInterrupt) as e:
+            pass
+
