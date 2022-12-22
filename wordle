@@ -79,6 +79,9 @@ def run_wordle(answer, words, guesser):
                 break
         to_send = (guess_num, score, None, err)
     guesser.send((guess_num, score, answer, err))
+    if score == CORRECT_GUESS:
+        return guess_num
+    return None
 
 
 def overlap_with_other_words(by_position_letter, word):
@@ -152,12 +155,12 @@ def automatic(words):
         if result:
             verbose(result)
             guess_num, score, answer, err = result
-            print(guess)
-            print(guess_num, score)
+            output(guess)
+            output(guess_num, score)
             if score == CORRECT_GUESS:
                 break
             elif answer:
-                print(answer)
+                output(answer)
                 break
             if score:
                 available_positions = []
@@ -183,12 +186,19 @@ def automatic(words):
                 guess = choose_candidate_word(by_position_letter, current_words)
     yield
 
-    
+
+
+def create_guesser(args):
+    if args.guesser == "interactive":
+        return interactive()
+    else:
+        return automatic(words)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--doc-test", action="store_true")
+    parser.add_argument("--benchmark", type=int)
     parser.add_argument("--guesser", choices=["interactive", "automatic"], default="interactive")
     parser.add_argument("--verbose", action="store_true")
 
@@ -204,13 +214,23 @@ if __name__ == '__main__':
         doctest.testmod(verbose=True)
     else:
         words = load_words()
-        word = random.choice(words)
         try:
-            if args.guesser == "interactive":
-                guesser = interactive()
+            if args.benchmark:
+                def output(*agr, **kw):
+                    pass
+                results = []
+                for word in words[0:args.benchmark]:
+                    results.append(run_wordle(word, set(words), create_guesser(args)))
+                    if len(results) % 100 == 0:
+                        print("{}/{}".format(len(results),len(words)))
+                num_correct = len([r for r in results if r is not None])
+                average_guess = sum(r for r in results if r is not None)/num_correct
+                win_percent = 100 * num_correct/len(results)
+                print("{}/{} ({:.1f}%) found - average guess num {}".format(num_correct, len(results), win_percent, average_guess))
             else:
-                guesser = automatic(words)
-            run_wordle(word, set(words), guesser)
+                output = print
+                word = random.choice(words)
+                run_wordle(word, set(words), create_guesser(args))
         except (EOFError, KeyboardInterrupt) as e:
             pass
 
