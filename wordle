@@ -91,13 +91,18 @@ def overlap_with_other_words(by_position_letter, word):
     return overlap
 
 
-def choose_candidate_word(by_position_letter, words):
+def choose_overlapping(by_position_letter, words):
     words = list(words)
     score = lambda w: len(set(w)) * overlap_with_other_words(by_position_letter, w)
     words.sort(key=score)
     word = words[-1]
     verbose("score", word, score(word))
     return word
+
+
+def choose_random(by_position_letter, words):
+    words = list(words)
+    return random.choice(words)
 
 
 def by_position_letter_index(words):
@@ -127,7 +132,7 @@ def interactive():
     yield
 
 
-def automatic(words):
+def automatic(words, chooser):
     """
     >>> guesser = automatic(["alien", "alley", "voles"])
     >>> next(guesser)
@@ -148,7 +153,7 @@ def automatic(words):
     2 🟩🟩🟩🟩🟩
     """
     by_position_letter = by_position_letter_index(words)
-    guess = choose_candidate_word(by_position_letter, words)
+    guess = chooser(by_position_letter, words)
     current_words = set(words)
     while True:
         result = yield guess
@@ -183,7 +188,7 @@ def automatic(words):
                             current_words = current_words - by_position_letter[(pos, g)]
                     verbose(len(current_words))
                 by_position_letter = by_position_letter_index(current_words)
-                guess = choose_candidate_word(by_position_letter, current_words)
+                guess = chooser(by_position_letter, current_words)
     yield
 
 
@@ -192,7 +197,11 @@ def create_guesser(args):
     if args.guesser == "interactive":
         return interactive()
     else:
-        return automatic(words)
+        if args.chooser == "random":
+            chooser = choose_random
+        elif args.chooser == "overlap":
+            chooser = choose_overlapping
+        return automatic(words, chooser)
 
 
 if __name__ == '__main__':
@@ -200,6 +209,7 @@ if __name__ == '__main__':
     parser.add_argument("--doc-test", action="store_true")
     parser.add_argument("--benchmark", type=int)
     parser.add_argument("--guesser", choices=["interactive", "automatic"], default="interactive")
+    parser.add_argument("--chooser", choices=["random", "overlap"], default="overlap")
     parser.add_argument("--verbose", action="store_true")
 
     args = parser.parse_args()
