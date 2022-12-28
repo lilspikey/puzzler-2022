@@ -105,6 +105,23 @@ def choose_random(by_position_letter, words):
     return random.choice(words)
 
 
+def choose_likelihood(by_position_letter, words):
+    words = list(words)
+    position_totals = [0] * len(words[0])
+    for pos, letter in by_position_letter:
+        position_totals[pos] += len(by_position_letter[(pos, letter)])
+    def score(word):
+        likelihood = 1.0
+        for i, w in enumerate(word):
+            p = len(by_position_letter[(i, w)]) / position_totals[i]
+            likelihood *= p
+        return likelihood
+    words.sort(key=score)
+    word = words[-1]
+    verbose("score", word, score(word))
+    return word
+
+
 def by_position_letter_index(words):
     by_position_letter = defaultdict(set)
     for word in words:
@@ -201,6 +218,8 @@ def create_guesser(args):
             chooser = choose_random
         elif args.chooser == "overlap":
             chooser = choose_overlapping
+        elif args.chooser == "likelihood":
+            chooser = choose_likelihood
         return automatic(words, chooser)
 
 
@@ -209,7 +228,7 @@ if __name__ == '__main__':
     parser.add_argument("--doc-test", action="store_true")
     parser.add_argument("--benchmark", type=int)
     parser.add_argument("--guesser", choices=["interactive", "automatic"], default="interactive")
-    parser.add_argument("--chooser", choices=["random", "overlap"], default="overlap")
+    parser.add_argument("--chooser", choices=["random", "overlap", "likelihood"], default="overlap")
     parser.add_argument("--verbose", action="store_true")
 
     args = parser.parse_args()
