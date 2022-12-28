@@ -151,14 +151,14 @@ def interactive():
 
 def automatic(words, chooser):
     """
-    >>> guesser = automatic(["alien", "alley", "voles"])
+    >>> guesser = automatic(["alien", "alley", "voles"], choose_overlapping)
     >>> next(guesser)
     'alien'
     >>> guesser.send((1, '🟩🟩⬜🟩⬜', None, None))
     alien
     1 🟩🟩⬜🟩⬜
     'alley'
-    >>> guesser = automatic(["wolfs", "hasty", "tasty", "voles", "shall", "shalt"])
+    >>> guesser = automatic(["wolfs", "hasty", "tasty", "voles", "shall", "shalt"], choose_overlapping)
     >>> next(guesser)
     'shalt'
     >>> guesser.send((1, '🟨🟨🟨⬜🟨', None, None))
@@ -238,6 +238,13 @@ if __name__ == '__main__':
         def verbose(*arg, **kw):
             pass
 
+
+    if args.doc_test or not args.benchmark:
+        output = print
+    else:
+        def output(*arg, **kw):
+            pass
+
     if args.doc_test:
         import doctest
         doctest.testmod(verbose=True)
@@ -245,8 +252,6 @@ if __name__ == '__main__':
         words = load_words()
         try:
             if args.benchmark:
-                def output(*agr, **kw):
-                    pass
                 results = []
                 for word in words[0:args.benchmark]:
                     results.append(run_wordle(word, set(words), create_guesser(args)))
@@ -257,7 +262,6 @@ if __name__ == '__main__':
                 win_percent = 100 * num_correct/len(results)
                 print("{}/{} ({:.1f}%) found - average guess num {}".format(num_correct, len(results), win_percent, average_guess))
             else:
-                output = print
                 word = random.choice(words)
                 run_wordle(word, set(words), create_guesser(args))
         except (EOFError, KeyboardInterrupt) as e:
