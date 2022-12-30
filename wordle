@@ -255,7 +255,7 @@ if __name__ == '__main__':
                 results = []
                 for word in words[0:args.benchmark]:
                     results.append(run_wordle(word, set(words), create_guesser(args)))
-                    if len(results) % 100 == 0:
+                    if len(results) % 100 == 0 and args.verbose:
                         print("{}/{}".format(len(results),len(words)))
                 num_correct = len([r for r in results if r is not None])
                 average_guess = sum(r for r in results if r is not None)/num_correct
