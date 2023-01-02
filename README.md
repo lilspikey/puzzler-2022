@@ -66,15 +66,20 @@ word within 6 guesses.  Though not consistently.
 
 #### Benchmark of automatic use
 
-There are 3 different "choosers" for automatic mode. These are use to select the next guess from the current list of available words.
+There are 3 different "choosers" for automatic mode. These are used to select the next guess from the current list of available words.
 
 ```
+# pure random selection
 $ ./wordle --guesser automatic --chooser random --benchmark 12972
 10951/12972 (84.4%) found - average guess num 4.627157337229477
 
+# pick a word that seems to overlap with the most other words (by at least one letter)
+# also has a bias against repeated letters in a word
 $ ./wordle --guesser automatic --chooser overlap --benchmark 12972
 11495/12972 (88.6%) found - average guess num 4.338321009134407
 
+# attempt to use probability to estimate how likely a word will at least match
+# one or more letter/position
 $ ./wordle --guesser automatic --chooser likelihood --benchmark 12972
 11376/12972 (87.7%) found - average guess num 4.372802390998594
 ```
