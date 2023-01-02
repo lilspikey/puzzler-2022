@@ -76,5 +76,5 @@ $ ./wordle --guesser automatic --chooser overlap --benchmark 12972
 11495/12972 (88.6%) found - average guess num 4.338321009134407
 
 $ ./wordle --guesser automatic --chooser likelihood --benchmark 12972
-11121/12972 (85.7%) found - average guess num 4.511464796331265
+11376/12972 (87.7%) found - average guess num 4.372802390998594
 ```

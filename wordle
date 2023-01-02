@@ -107,6 +107,17 @@ def choose_random(by_position_letter, words):
 
 def choose_likelihood(by_position_letter, words):
     words = list(words)
+    freq_score = score_letter_frequency(words)
+    pos_score = score_letter_position(by_position_letter, words)
+    def score(word):
+        return (freq_score(word), pos_score(word))
+    words.sort(key=score)
+    word = words[-1]
+    verbose("score", word, score(word))
+    return word
+
+
+def score_letter_position(by_position_letter, words):
     position_totals = [0] * len(words[0])
     for pos, letter in by_position_letter:
         position_totals[pos] += len(by_position_letter[(pos, letter)])
@@ -116,10 +127,42 @@ def choose_likelihood(by_position_letter, words):
             p = len(by_position_letter[(i, w)]) / position_totals[i]
             likelihood *= p
         return likelihood
-    words.sort(key=score)
-    word = words[-1]
-    verbose("score", word, score(word))
-    return word
+    return score
+
+
+def score_letter_frequency(words):
+    """
+    >>> score = score_letter_frequency(["tim", "tom", "tam", "sam"])
+    >>> score("tim")
+    0.8125
+    >>> score("tom")
+    0.8125
+    >>> score("tam")
+    0.875
+    >>> score("sam")
+    0.625
+    >>> score = score_letter_frequency(["aa", "ah", "bb"])
+    >>> score("aa")
+    0.6666666666666666
+    """
+    pos_to_letters = defaultdict(set)
+    for word in words:
+        for pos, letter in enumerate(word):
+            pos_to_letters[pos].add(letter)
+    available_positions = sorted(pos for (pos, letters) in pos_to_letters.items() if len(letters) > 1)
+    letters_to_words = defaultdict(set)
+    for word in words:
+        for pos, letter in enumerate(word):
+            if len(pos_to_letters[pos]) > 1:
+                letters_to_words[letter].add(word)
+    total_words = len(words)
+    def score(word):
+        letters = {word[pos] for pos in available_positions}
+        p = 1.0
+        for letter in letters:
+            p *= (1.0 - (len(letters_to_words[letter])/total_words))
+        return 1.0 - p
+    return score
 
 
 def by_position_letter_index(words):
