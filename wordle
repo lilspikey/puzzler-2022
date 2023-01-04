@@ -8,17 +8,18 @@ from collections import defaultdict
 
 
 WORDS_GIST_URL = 'https://gist.githubusercontent.com/dracos/dd0668f281e685bad51479e5acaadb93/raw/ca9018b32e963292473841fb55fd5a62176769b5/valid-wordle-words.txt'
+WORDLE_ANSWERS_GIST_URL = 'https://gist.githubusercontent.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b/raw/c915fa3264be6d35990d0edb8bf927df7a015602/wordle-answers-alphabetical.txt'
 CORRECT_SPOT = '🟩'
 WRONG_SPOT = '🟨'
 NO_SPOT = '⬜'
 CORRECT_GUESS = CORRECT_SPOT * 5
 
 
-def load_words():
-    words_file = 'valid-wordle-words.txt'
+def load_words(url):
+    words_file = url.split('/')[-1]
     if not os.path.exists(words_file):
         from urllib.request import urlopen
-        words = urlopen(WORDS_GIST_URL).read().decode('utf8')
+        words = urlopen(url).read().decode('utf8')
         with open(words_file, 'w') as f:
             f.write(words)
     with open(words_file, 'r') as f:
@@ -272,6 +273,7 @@ if __name__ == '__main__':
     parser.add_argument("--benchmark", type=int)
     parser.add_argument("--guesser", choices=["interactive", "automatic"], default="interactive")
     parser.add_argument("--chooser", choices=["random", "overlap", "likelihood"], default="overlap")
+    parser.add_argument("--use-wordle-answers", action="store_true")
     parser.add_argument("--verbose", action="store_true")
 
     args = parser.parse_args()
@@ -292,7 +294,10 @@ if __name__ == '__main__':
         import doctest
         doctest.testmod(verbose=True)
     else:
-        words = load_words()
+        if args.use_wordle_answers:
+            words = load_words(WORDLE_ANSWERS_GIST_URL)
+        else:
+            words = load_words(WORDS_GIST_URL)
         try:
             if args.benchmark:
                 results = []
